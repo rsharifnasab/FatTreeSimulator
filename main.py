@@ -3,6 +3,8 @@
 from sys import argv
 
 import networkx as nx
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # K racks switches links
 test_cases = [
@@ -86,6 +88,8 @@ for pod_no in range(pod_count):
 
 
 
+# TODO: connect core to aggr nodes
+
 servers = [ n for  n in G.nodes(data=False) if "server" in n ]
 edge_sw = [ n for  n in G.nodes(data=False) if "edge" in n ]
 aggr_sw = [ n for  n in G.nodes(data=False) if "aggr" in n ]
@@ -100,8 +104,19 @@ for switch in edge_sw : #aggr_sw + core_sw + edge_sw:
 assert G.number_of_nodes() == total_server_count + total_switch_count
 
 
-import matplotlib.pyplot as plt
 subax2 = plt.subplot(122)
 nx.draw(G, pos=nx.circular_layout(G), node_color='r', edge_color='b')
 
 plt.savefig("img.png")
+
+
+# TODO: more efficient way to do this
+df = pd.DataFrame({"node1":[], "node2":[], "num":[]})
+
+for n1, n2 in G.edges():
+    df.loc[len(df.index)] = [n1, n2, 0]
+
+
+
+
+df.to_csv("result.csv", index=False)
