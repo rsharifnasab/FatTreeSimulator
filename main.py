@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from sys import argv
 
@@ -15,7 +15,7 @@ test_cases = [
 ]
 
 K = int(argv[1])
-K = 8
+assert K % 2 == 0
 
 
 pod_count = K
@@ -26,13 +26,14 @@ switch_port_count = K
 k2 = K // 2
 edge_sw_per_pod = k2
 aggr_sw_per_pod = k2
+server_per_edge_switch = k2
 
 k2p2 = (K//2) * (K//2)
 server_per_pod =  k2p2
 core_switch_count =  k2p2
 
 total_server_count = pod_count * server_per_pod
-assert total_server_count == (K**3)/4
+assert total_server_count == (K**3)//4
 
 total_switch_count = core_switch_count + pod_count * switch_per_pod
 assert total_switch_count == (5 * (K**2)) // 4
@@ -57,3 +58,50 @@ for i in range(core_switch_count):
     G.add_node(f"core {i}")
 
 
+for i in range(aggr_sw_per_pod * pod_count):
+    G.add_node(f"aggr {i}")
+
+for i in range(edge_sw_per_pod * pod_count):
+    G.add_node(f"edge {i}")
+
+for i in range(total_server_count):
+    G.add_node(f"server {i}")
+
+assert G.number_of_nodes() == total_server_count + total_switch_count
+
+
+cnt = 0
+for i in range(edge_sw_per_pod * pod_count):
+    for _ in range(server_per_edge_switch):
+        G.add_edge(f"edge {i}", f"server {cnt}")
+        cnt+= 1
+
+
+for pod_no in range(pod_count):
+    for i in range(aggr_sw_per_pod):
+        for j in range(edge_sw_per_pod):
+            aggr = pod_no * aggr_sw_per_pod + i
+            edge = pod_no * edge_sw_per_pod + j
+            G.add_edge(f"aggr {aggr}", f"edge {edge}")
+
+
+
+servers = [ n for  n in G.nodes(data=False) if "server" in n ]
+edge_sw = [ n for  n in G.nodes(data=False) if "edge" in n ]
+aggr_sw = [ n for  n in G.nodes(data=False) if "aggr" in n ]
+core_sw = [ n for  n in G.nodes(data=False) if "core" in n ]
+
+for server in servers:
+    assert len(list(G.neighbors(server))) == 1
+
+for switch in edge_sw : #aggr_sw + core_sw + edge_sw:
+    assert len(list(G.neighbors(switch))) == switch_port_count
+
+assert G.number_of_nodes() == total_server_count + total_switch_count
+
+
+import matplotlib.pyplot as plt
+subax2 = plt.subplot(122)
+nx.draw(G, pos=nx.circular_layout(G), node_color='r', edge_color='b')
+
+plt.savefig("img.png")
