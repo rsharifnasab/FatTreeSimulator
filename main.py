@@ -28,24 +28,32 @@ def check_test_cases(given_test_cases):
 def save_to_csv(G):
     # TODO: more efficient way to do this
     df = pd.DataFrame({"node1": [], "node2": [], "num": []})
-    for n1, n2 in G.edges():
+    for n1name, n2name in G.edges():
+        n1 = G.nodes[n1name]["num"]
+        n2 = G.nodes[n2name]["num"]
         df.loc[len(df.index)] = [n1, n2, 0]
     df.to_csv("result.csv", index=False)
 
 
 def add_nodes(G):
 
-    for i in range(core_switch_count):
-        G.add_node(f"core {i}")
-
-    for i in range(aggr_sw_per_pod * pod_count):
-        G.add_node(f"aggr {i}")
+    cnt = 0
+    for i in range(total_server_count):
+        G.add_node(f"server {i}", num = cnt)
+        cnt += 1
 
     for i in range(edge_sw_per_pod * pod_count):
-        G.add_node(f"edge {i}")
+        G.add_node(f"edge {i}", num = cnt)
+        cnt += 1
 
-    for i in range(total_server_count):
-        G.add_node(f"server {i}")
+    for i in range(aggr_sw_per_pod * pod_count):
+        G.add_node(f"aggr {i}", num = cnt)
+        cnt += 1
+
+    for i in range(core_switch_count):
+        G.add_node(f"core {i}", num = cnt)
+        cnt += 1
+
 
     assert G.number_of_nodes() == total_server_count + total_switch_count
 
